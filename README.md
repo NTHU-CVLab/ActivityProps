@@ -4,12 +4,13 @@
 - Train: MSRII
 
 ## Preprocess
-1. Read videos, crop by time duration
-2. Save that clips
-3. C3D feature extraction
+1. Read videos, crop by time duration and save that clips
+2. C3D feature extraction
+(@leVirve)
 
 ## Deep learning framework
 - Keras
+(@meegoStar)
 
 ## Evaluate
 - tIoU
