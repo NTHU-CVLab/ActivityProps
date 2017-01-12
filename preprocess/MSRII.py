@@ -1,7 +1,7 @@
 import itertools
 from collections import namedtuple
 
-from data import Video
+from data import Video, save_video
 
 Meta = namedtuple('VideoMeta', ['name', 'metas'])
 
@@ -60,23 +60,17 @@ class Dataset:
     def _read_video(self, video):
         with Video(self.video_folder + video.name) as v:
             frames = v.read()
-
         needed_frames = []
         for meta in video.metas:
-            s = meta['start'] * self.VIDEO_FRAMERATE // 10
-            t = meta['duration'] * self.VIDEO_FRAMERATE // 10
-            needed_frames += frames[s:s + t]  # frame_rate not correct ?
-
+            s = meta['start']
+            t = meta['duration']
+            needed_frames += frames[s:s + t]
         return video.name, needed_frames
 
     def write_video(self, video, output_dir='cutting/'):
         name, frames = video
-        import cv2
-        fourcc = cv2.VideoWriter_fourcc(*'XVID')
-        out = cv2.VideoWriter(
-            self.root + output_dir + name, fourcc,
-            self.VIDEO_FRAMERATE, (self.VIDEO_WIDTH, self.VIDEO_HEIGHT)
+        save_video(
+            self.root + output_dir + name,
+            self.VIDEO_FRAMERATE, self.VIDEO_WIDTH, self.VIDEO_HEIGHT,
+            frames
         )
-        for frame in frames:
-            out.write(frame)
-        out.release()
