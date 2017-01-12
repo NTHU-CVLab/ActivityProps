@@ -23,3 +23,11 @@ class Video:
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.cap.release()
+
+
+def save_video(filepath, fps, w, h, data):
+    fourcc = cv2.VideoWriter_fourcc(*'XVID')
+    out = cv2.VideoWriter(filepath, fourcc, fps, (w, h))
+    for frame in data:
+        out.write(frame)
+    out.release()

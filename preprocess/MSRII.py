@@ -1,7 +1,7 @@
 import itertools
 from collections import namedtuple
 
-from data import Video
+from data import Video, save_video
 
 Meta = namedtuple('VideoMeta', ['name', 'metas'])
 
@@ -12,10 +12,16 @@ class Dataset:
     LABEL_FILE_HEAD = 6
     VIDEO_FOLDER = 'videos/'
 
+    VIDEO_WIDTH = 320
+    VIDEO_HEIGHT = 240
+    VIDEO_FRAMERATE = 15
+
+    NUM_VIDEOS = 54
+
     def __init__(self, root):
         self.root = root
         self.video_folder = root + self.VIDEO_FOLDER
-        self.metas = self.load_label()
+        self.video_metas = self.load_label()
 
         self._seek = 0
 
@@ -32,7 +38,7 @@ class Dataset:
                 for line in f.readlines()[self.LABEL_FILE_HEAD:]
             ]
         return [
-            Meta(video, metas)
+            Meta(video, list(metas))
             for video, metas in itertools.groupby(raw, lambda x: x['name'])
         ]
 
@@ -49,9 +55,22 @@ class Dataset:
         }
 
     def take(self):
-        return self._read_video(self.metas[self.seek])
+        return self._read_video(self.video_metas[self.seek])
 
-    def _read_video(self, meta):
-        filepath = '{}{}'.format(self.video_folder, meta.name)
-        with Video(filepath) as video:
-            return meta.name, video.read()
+    def _read_video(self, video):
+        with Video(self.video_folder + video.name) as v:
+            frames = v.read()
+        needed_frames = []
+        for meta in video.metas:
+            s = meta['start']
+            t = meta['duration']
+            needed_frames += frames[s:s + t]
+        return video.name, needed_frames
+
+    def write_video(self, video, output_dir='cutting/'):
+        name, frames = video
+        save_video(
+            self.root + output_dir + name,
+            self.VIDEO_FRAMERATE, self.VIDEO_WIDTH, self.VIDEO_HEIGHT,
+            frames
+        )
