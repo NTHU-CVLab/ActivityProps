@@ -1,7 +1,7 @@
 import itertools
 from collections import namedtuple
 
-from data import Video, save_video
+from video import Video, save_video
 
 Meta = namedtuple('VideoMeta', ['name', 'metas'])
 
@@ -53,6 +53,12 @@ class Dataset:
             'duration': int(tokens[6]),
             'class': int(tokens[7]),
         }
+
+    def read_cutting_video(self, folder='cutting/'):
+        cutting_video_folder = self.root + folder
+        name, _ = self.video_metas[self.seek]
+        with Video(cutting_video_folder + name) as v:
+            return v.np_read(resized_size=(112, 112))
 
     def take(self):
         return self._read_video(self.video_metas[self.seek])
