@@ -60,6 +60,12 @@ class Dataset:
         with Video(cutting_video_folder + name) as v:
             return name, v.np_read(resized_size=(112, 112))
 
+    def read_full_video(self, folder='videos/'):
+        cutting_video_folder = self.root + folder
+        name, _ = self.video_metas[self.seek]
+        with Video(cutting_video_folder + name) as v:
+            return name, v.np_read(resized_size=(112, 112))
+
     def take(self):
         return self._read_video(self.video_metas[self.seek])
 

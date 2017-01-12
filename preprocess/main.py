@@ -17,7 +17,9 @@ def cutting():
 def get_video():
     dataset = MSRII.Dataset('/data-disk/MSRII/')
     for _ in range(MSRII.Dataset.NUM_VIDEOS):
-        name, video = dataset.read_cutting_video()
+        # Read cutting / full video
+        # name, video = dataset.read_cutting_video()
+        name, video = dataset.read_full_video()
 
         video = video.transpose(1, 0, 2, 3)
         num_frames = video.shape[0]
