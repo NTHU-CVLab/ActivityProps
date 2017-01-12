@@ -1,3 +1,5 @@
+import os
+
 import h5py
 import numpy as np
 
@@ -20,7 +22,7 @@ def get_video():
         video = video.transpose(1, 0, 2, 3)
         num_frames = video.shape[0]
         num_instances = num_frames // 16
-        video = video[:num_instances*16, :, :, :]
+        video = video[:num_instances * 16, :, :, :]
         video = video.reshape((num_instances, 16, 3,) + (112, 112))
         video = video.transpose(0, 2, 1, 3, 4)
 
@@ -36,12 +38,19 @@ def main():
     print('Model done')
 
     print('Starting extracting features')
+
+    feature_file = './MSRII-c3d-features.h56'
+    mode = 'r+' if os.path.exists(feature_file) else 'w'
+    with h5py.File(feature_file, mode) as h5:
+        print(h5.keys())
+
     for name, x in get_video():
         x = x - mean
         y = model.predict(x, batch_size=32)
-        with h5py.File('./MSRII-c3d-features.h5', 'r+') as f:
+        with h5py.File(feature_file, 'r+') as f:
             f.create_dataset(name, data=y, dtype='float32')
         print('Finish extracting {}'.format(name))
+        break
 
 
 if __name__ == '__main__':

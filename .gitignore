@@ -90,5 +90,3 @@ ENV/
 
 # data
 data/
-*.h5
-
