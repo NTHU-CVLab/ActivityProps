@@ -33,9 +33,9 @@ class C3DFeatureNet:
             if i == stop_index:
                 break
             for seg in segs:
-                if not seg:
+                if len(seg.frames) == 0:
                     continue
-                y = apply_model(seg)
+                y = apply_model(seg.frames)
                 print(y.shape)
                 # label = ?
             # write ?.avi info

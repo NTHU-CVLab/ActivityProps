@@ -5,6 +5,7 @@ from collections import namedtuple
 from video import Video, save_video
 
 Meta = namedtuple('VideoMeta', ['name', 'seg_metas'])
+Segments = namedtuple('VideoSegments', ['frames', 'label'])
 
 
 class Dataset:
@@ -18,6 +19,7 @@ class Dataset:
     VIDEO_FRAMERATE = 15
 
     NUM_VIDEOS = 54
+    OTHER_LABEL = 0
 
     def __init__(self, root):
         self.root = root
@@ -67,13 +69,14 @@ class Dataset:
         seg_metas = video_meta.seg_metas
         s = [m['start'] for m in seg_metas]
         t = [m['duration'] for m in seg_metas]
+        class_map = {m['start']: m['class'] for m in seg_metas}
 
         last = len(frames)
         start_frames = sorted(s + [a + b for a, b in zip(s, t)] + [0, last])
         stop_frames = start_frames[1:]
 
         return [
-            frames[start:stop]
+            Segments(frames[start:stop], class_map.get(start, self.OTHER_LABEL))
             for start, stop in zip(start_frames, stop_frames)
         ]
 
