@@ -28,9 +28,6 @@ class Video:
         self.frames = frames
         return frames
 
-    def np_read(self, resized_size, dim_ordering='th'):
-        return self.np_array(self.read(resized_size, dim_ordering))
-
     @classmethod
     def np_array(cls, frames, dim_ordering='th'):
         video = np.array(frames, dtype=np.float32)

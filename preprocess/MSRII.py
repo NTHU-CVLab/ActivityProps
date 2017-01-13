@@ -25,13 +25,6 @@ class Dataset:
         self.root = root
         self.video_folder = os.path.join(root, self.VIDEO_FOLDER)
         self.video_metas = self.load_label()
-        self._seek = 0
-
-    @property
-    def seek(self):
-        p = self._seek
-        self._seek += 1
-        return p
 
     def load_label(self):
         with open(self.root + self.LABEL_FILE) as f:
@@ -79,25 +72,6 @@ class Dataset:
             Segments(frames[start:stop], class_map.get(start, self.OTHER_LABEL))
             for start, stop in zip(start_frames, stop_frames)
         ]
-
-    def read_cutting_video(self, folder='cutting/'):
-        folder = os.path.join(self.root, folder)
-        name, _ = self.video_metas[self.seek]
-        with Video(folder + name) as v:
-            return name, v.np_read(resized_size=(112, 112))
-
-    def take(self):
-        return self._read_video_dep(self.video_metas[self.seek])
-
-    def _read_video_dep(self, video):
-        with Video(self.video_folder + video.name) as v:
-            frames = v.read()
-        needed_frames = []
-        for meta in video.seg_metas:
-            s = meta['start']
-            t = meta['duration']
-            needed_frames += frames[s:s + t]
-        return video.name, needed_frames
 
     def write_video(self, video, output_dir='cutting/'):
         name, frames = video
