@@ -1,4 +1,3 @@
-import os
 import time
 
 import h5py
@@ -41,12 +40,12 @@ class C3DFeatureNet:
             s = time.time()
 
             packs = [apply_model(seg) for seg in segs if len(seg.frames)]
-            labels += [pack[0] for pack in packs]
-            features += [pack[1] for pack in packs]
+            labels.append(np.vstack([l for pack in packs for l in pack[0]]))
+            features.append(np.vstack([f for pack in packs for f in pack[1]]))
 
             print('Finish {} in {} sec.'.format(name, time.time() - s))
 
-        self.save_features(np.concatenate(features), np.concatenate(labels))
+        self.save_features(np.vstack(features), np.vstack(labels))
 
     def build_input(self, frames):
         np_video = Video.np_array(frames).transpose(1, 0, 2, 3)
@@ -62,8 +61,7 @@ class C3DFeatureNet:
         return num_clips, np_video
 
     def save_features(self, features, labels):
-        mode = 'r+' if os.path.exists(self.feature_file) else 'w'
-        with h5py.File(self.feature_file, mode) as h5:
+        with h5py.File(self.feature_file, 'w') as h5:
             h5.create_dataset('features', data=features, dtype='float32')
             h5.create_dataset('labels', data=labels, dtype='int8')
 
