@@ -4,10 +4,10 @@ from keras.layers.convolutional import Convolution3D, MaxPooling3D, ZeroPadding3
 from keras.layers.core import Dense, Dropout, Flatten
 from keras.models import Sequential
 
-import Video
+from video import Video
 
 
-class C3DNet:
+class C3DFeatureNet:
 
     MODEL_WEIGHTS = '../data/models/c3d-sports1M_weights.h5'
     MODEL_MEAN = '../data/models/c3d-sports1M_mean.npy'
@@ -17,20 +17,32 @@ class C3DNet:
     def __init__(self, model_weight=None, model_mean=None):
         self.model_weight = model_weight or self.MODEL_WEIGHTS
         self.model_mean = model_mean or self.MODEL_MEAN
+        self.input_size = (112, 112)
 
-    def start(self):
-        model = self.load_network(True)
+    def start(self, dataset, stop_index=None):
+        model = self.load_network()
         mean = self.load_mean()
 
         model.compile(optimizer='sgd', loss='mse')
 
-        frames = None  # input
-        x = self.build_input(frames)
-        y = model.predict(x - mean, batch_size=32)
+        def apply_model(frames):
+            x = self.build_input(frames)
+            return model.predict(x - mean, batch_size=32)
+
+        for i, clips in enumerate(dataset.get(self.input_size)):
+            if i == stop_index:
+                break
+            for clip in clips:
+                if not clip:
+                    continue
+                y = apply_model(clip)
+                print(y.shape)
+                # label = ?
+            # write ?.avi info
 
     def load_mean(self):
         mean_total = np.load(self.model_mean)
-        mean = np.mean(mean_total, axis=(0, 2, 3, 4), keepdims=True)
+        return np.mean(mean_total, axis=(0, 2, 3, 4), keepdims=True)
 
     def load_network(self, summary=False):
         K.set_image_dim_ordering('th')
@@ -107,10 +119,10 @@ class C3DNet:
         np_video = Video.np_array(frames).transpose(1, 0, 2, 3)
 
         num_frames = np_video.shape[0]
-        num_clips = num_frames // INPUT_FRAMES
+        num_clips = num_frames // self.INPUT_FRAMES
 
-        np_video = np_video[:num_clips * INPUT_FRAMES, :, :, :]
-        np_video = np_video.reshape((num_clips, INPUT_FRAMES, 3) + (112, 112))
+        np_video = np_video[:num_clips * self.INPUT_FRAMES, :, :, :]
+        np_video = np_video.reshape((num_clips, self.INPUT_FRAMES, 3,) + (112, 112))
         np_video = np_video.transpose(0, 2, 1, 3, 4)
 
         return np_video

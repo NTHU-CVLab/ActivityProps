@@ -1,3 +1,4 @@
+import os
 import itertools
 from collections import namedtuple
 
@@ -8,9 +9,9 @@ Meta = namedtuple('VideoMeta', ['name', 'metas'])
 
 class Dataset:
 
+    VIDEO_FOLDER = 'videos/'
     LABEL_FILE = 'MSRHA_Dataset_GT_160x120.txt'
     LABEL_FILE_HEAD = 6
-    VIDEO_FOLDER = 'videos/'
 
     VIDEO_WIDTH = 320
     VIDEO_HEIGHT = 240
@@ -20,9 +21,8 @@ class Dataset:
 
     def __init__(self, root):
         self.root = root
-        self.video_folder = root + self.VIDEO_FOLDER
+        self.video_folder = os.path.join(root, self.VIDEO_FOLDER)
         self.video_metas = self.load_label()
-
         self._seek = 0
 
     @property
@@ -54,22 +54,40 @@ class Dataset:
             'class': int(tokens[7]),
         }
 
-    def read_cutting_video(self, folder='cutting/'):
-        cutting_video_folder = self.root + folder
-        name, _ = self.video_metas[self.seek]
-        with Video(cutting_video_folder + name) as v:
-            return name, v.np_read(resized_size=(112, 112))
+    def get(self, resized_size):
+        for video_meta in self.video_metas:
+            frames = self.read_video(video_meta, resized_size)
+            clips = self.split_by_any_tag(video_meta, frames)
+            yield clips
 
-    def read_full_video(self, folder='videos/'):
-        cutting_video_folder = self.root + folder
+    def read_video(self, video_meta, resized_size):
+        with Video(self.video_folder + video_meta.name) as v:
+            return v.read(resized_size)
+
+    def split_by_any_tag(self, video_meta, frames):
+        meta = video_meta.metas
+        s = [m['start'] for m in meta]
+        t = [m['duration'] for m in meta]
+
+        last = len(frames)
+        start_frames = sorted(s + [a + b for a, b in zip(s, t)] + [0, last])
+        stop_frames = start_frames[1:]
+
+        return [
+            frames[start:stop]
+            for start, stop in zip(start_frames, stop_frames)
+        ]
+
+    def read_cutting_video(self, folder='cutting/'):
+        folder = os.path.join(self.root, folder)
         name, _ = self.video_metas[self.seek]
-        with Video(cutting_video_folder + name) as v:
+        with Video(folder + name) as v:
             return name, v.np_read(resized_size=(112, 112))
 
     def take(self):
-        return self._read_video(self.video_metas[self.seek])
+        return self._read_video_dep(self.video_metas[self.seek])
 
-    def _read_video(self, video):
+    def _read_video_dep(self, video):
         with Video(self.video_folder + video.name) as v:
             frames = v.read()
         needed_frames = []
