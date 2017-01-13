@@ -31,9 +31,9 @@ class C3DFeatureNet:
         model.compile(optimizer='sgd', loss='mse')
         print('C3D-Network is ready.')
 
-        def apply_model(frames):
-            x = self.build_input(frames)
-            return model.predict(x - mean, batch_size=32)
+        def apply_model(seg):
+            num_x, x = self.build_input(seg.frames)
+            return [seg.label] * num_x, model.predict(x - mean, batch_size=32)
 
         labels, features = [], []
         for i, item in enumerate(dataset.get(self.input_size)):
@@ -42,10 +42,9 @@ class C3DFeatureNet:
             name, segs = item
 
             s = time.time()
-            fs = [apply_model(seg.frames) for seg in segs if len(seg.frames)]
-            features += fs
-            labels += [[seg.label] * f.shape[0] for f, seg in zip(fs, segs)]
-
+            packs = [apply_model(seg) for seg in segs if len(seg.frames)]
+            labels += [pack[0] for pack in packs]
+            features += [pack[1] for pack in packs]
             print('Finish extracting {} in {} sec.'.format(name, time.time() - s))
         self.save_features(features, labels)
 
@@ -59,7 +58,7 @@ class C3DFeatureNet:
         np_video = np_video.reshape((num_clips, self.INPUT_FRAMES, 3,) + (112, 112))
         np_video = np_video.transpose(0, 2, 1, 3, 4)
 
-        return np_video
+        return num_clips, np_video
 
     def create_feature_file(self):
         mode = 'r+' if os.path.exists(self.feature_file) else 'w'
