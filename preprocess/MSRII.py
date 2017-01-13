@@ -75,7 +75,7 @@ class Dataset:
         start_frames = sorted(s + [a + b for a, b in zip(s, t)] + [0, last])
         stop_frames = start_frames[1:]
 
-        return [
+        return video_meta.name, [
             Segments(frames[start:stop], class_map.get(start, self.OTHER_LABEL))
             for start, stop in zip(start_frames, stop_frames)
         ]

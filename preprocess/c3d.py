@@ -29,16 +29,16 @@ class C3DFeatureNet:
             x = self.build_input(frames)
             return model.predict(x - mean, batch_size=32)
 
-        for i, segs in enumerate(dataset.get(self.input_size)):
+        for i, item in enumerate(dataset.get(self.input_size)):
             if i == stop_index:
                 break
+            name, segs = item
             for seg in segs:
                 if len(seg.frames) == 0:
                     continue
                 y = apply_model(seg.frames)
-                print(y.shape)
-                # label = ?
-            # write ?.avi info
+                # label = seg.label
+            # write `name` info
 
     def build_input(self, frames):
         np_video = Video.np_array(frames).transpose(1, 0, 2, 3)
