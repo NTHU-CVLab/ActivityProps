@@ -41,7 +41,7 @@ def main():
 
     print('Starting extracting features')
 
-    feature_file = './MSRII-c3d-features.h56'
+    feature_file = './MSRII-c3d-features.h5'
     mode = 'r+' if os.path.exists(feature_file) else 'w'
     with h5py.File(feature_file, mode) as h5:
         print(h5.keys())
@@ -52,7 +52,6 @@ def main():
         with h5py.File(feature_file, 'r+') as f:
             f.create_dataset(name, data=y, dtype='float32')
         print('Finish extracting {}'.format(name))
-        break
 
 
 if __name__ == '__main__':
