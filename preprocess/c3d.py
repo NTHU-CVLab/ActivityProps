@@ -29,16 +29,28 @@ class C3DFeatureNet:
             x = self.build_input(frames)
             return model.predict(x - mean, batch_size=32)
 
-        for i, clips in enumerate(dataset.get(self.input_size)):
+        for i, segs in enumerate(dataset.get(self.input_size)):
             if i == stop_index:
                 break
-            for clip in clips:
-                if not clip:
+            for seg in segs:
+                if not seg:
                     continue
-                y = apply_model(clip)
+                y = apply_model(seg)
                 print(y.shape)
                 # label = ?
             # write ?.avi info
+
+    def build_input(self, frames):
+        np_video = Video.np_array(frames).transpose(1, 0, 2, 3)
+
+        num_frames = np_video.shape[0]
+        num_clips = num_frames // self.INPUT_FRAMES
+
+        np_video = np_video[:num_clips * self.INPUT_FRAMES, :, :, :]
+        np_video = np_video.reshape((num_clips, self.INPUT_FRAMES, 3,) + (112, 112))
+        np_video = np_video.transpose(0, 2, 1, 3, 4)
+
+        return np_video
 
     def load_mean(self):
         mean_total = np.load(self.model_mean)
@@ -114,15 +126,3 @@ class C3DFeatureNet:
         if summary:
             print(model.summary())
         return model
-
-    def build_input(self, frames):
-        np_video = Video.np_array(frames).transpose(1, 0, 2, 3)
-
-        num_frames = np_video.shape[0]
-        num_clips = num_frames // self.INPUT_FRAMES
-
-        np_video = np_video[:num_clips * self.INPUT_FRAMES, :, :, :]
-        np_video = np_video.reshape((num_clips, self.INPUT_FRAMES, 3,) + (112, 112))
-        np_video = np_video.transpose(0, 2, 1, 3, 4)
-
-        return np_video

@@ -4,7 +4,7 @@ from collections import namedtuple
 
 from video import Video, save_video
 
-Meta = namedtuple('VideoMeta', ['name', 'metas'])
+Meta = namedtuple('VideoMeta', ['name', 'seg_metas'])
 
 
 class Dataset:
@@ -38,8 +38,8 @@ class Dataset:
                 for line in f.readlines()[self.LABEL_FILE_HEAD:]
             ]
         return [
-            Meta(video, list(metas))
-            for video, metas in itertools.groupby(raw, lambda x: x['name'])
+            Meta(video, list(seg_metas))
+            for video, seg_metas in itertools.groupby(raw, lambda x: x['name'])
         ]
 
     def _build_meta(self, tokens):
@@ -54,20 +54,19 @@ class Dataset:
             'class': int(tokens[7]),
         }
 
-    def get(self, resized_size):
+    def get(self, resized_size=None):
         for video_meta in self.video_metas:
             frames = self.read_video(video_meta, resized_size)
-            clips = self.split_by_any_tag(video_meta, frames)
-            yield clips
+            yield self.split_by_any_tag(video_meta, frames)
 
     def read_video(self, video_meta, resized_size):
         with Video(self.video_folder + video_meta.name) as v:
             return v.read(resized_size)
 
     def split_by_any_tag(self, video_meta, frames):
-        meta = video_meta.metas
-        s = [m['start'] for m in meta]
-        t = [m['duration'] for m in meta]
+        seg_metas = video_meta.seg_metas
+        s = [m['start'] for m in seg_metas]
+        t = [m['duration'] for m in seg_metas]
 
         last = len(frames)
         start_frames = sorted(s + [a + b for a, b in zip(s, t)] + [0, last])
@@ -91,7 +90,7 @@ class Dataset:
         with Video(self.video_folder + video.name) as v:
             frames = v.read()
         needed_frames = []
-        for meta in video.metas:
+        for meta in video.seg_metas:
             s = meta['start']
             t = meta['duration']
             needed_frames += frames[s:s + t]
