@@ -24,7 +24,7 @@ class C3DFeatureNet:
         self.input_size = (112, 112)
         self.feature_file = feature_file
 
-    def start(self, dataset, stop_index=None):
+    def start(self, dataset):
         model = self.load_network()
         mean = self.load_mean()
 
@@ -37,16 +37,16 @@ class C3DFeatureNet:
 
         labels, features = [], []
         for i, item in enumerate(dataset.get(self.input_size)):
-            if i == stop_index:
-                break
             name, segs = item
-
             s = time.time()
+
             packs = [apply_model(seg) for seg in segs if len(seg.frames)]
             labels += [pack[0] for pack in packs]
             features += [pack[1] for pack in packs]
-            print('Finish extracting {} in {} sec.'.format(name, time.time() - s))
-        self.save_features(features, labels)
+
+            print('Finish {} in {} sec.'.format(name, time.time() - s))
+
+        self.save_features(np.concatenate(features), np.concatenate(labels))
 
     def build_input(self, frames):
         np_video = Video.np_array(frames).transpose(1, 0, 2, 3)
@@ -55,21 +55,17 @@ class C3DFeatureNet:
         num_clips = num_frames // self.INPUT_FRAMES
 
         np_video = np_video[:num_clips * self.INPUT_FRAMES, :, :, :]
-        np_video = np_video.reshape((num_clips, self.INPUT_FRAMES, 3,) + (112, 112))
+        np_video = np_video.reshape(
+                    (num_clips, self.INPUT_FRAMES, 3,) + self.input_size)
         np_video = np_video.transpose(0, 2, 1, 3, 4)
 
         return num_clips, np_video
 
-    def create_feature_file(self):
-        mode = 'r+' if os.path.exists(self.feature_file) else 'w'
-        with h5py.File(self.feature_file, mode) as _:
-            pass
-
     def save_features(self, features, labels):
-        self.create_feature_file()
-        with h5py.File(self.feature_file, 'r+') as h5:
-            h5.create_dataset('features', data=np.concatenate(features), dtype='float32')
-            h5.create_dataset('labels', data=np.concatenate(labels), dtype='int8')
+        mode = 'r+' if os.path.exists(self.feature_file) else 'w'
+        with h5py.File(self.feature_file, mode) as h5:
+            h5.create_dataset('features', data=features, dtype='float32')
+            h5.create_dataset('labels', data=labels, dtype='int8')
 
     def load_mean(self):
         mean_total = np.load(self.model_mean)

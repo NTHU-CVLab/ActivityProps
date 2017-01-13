@@ -54,29 +54,27 @@ class Dataset:
             frames = self.read_video(video_meta, resized_size)
             yield self.split_by_any_tag(video_meta, frames)
 
-    def read_video(self, video_meta, resized_size):
+    def read_video(self, video_meta, size=None):
         with Video(self.video_folder + video_meta.name) as v:
-            return v.read(resized_size)
+            return v.load().resize(size)
 
     def split_by_any_tag(self, video_meta, frames):
         seg_metas = video_meta.seg_metas
         s = [m['start'] for m in seg_metas]
         t = [m['duration'] for m in seg_metas]
-        class_map = {m['start']: m['class'] for m in seg_metas}
+        label_map = {m['start']: m['class'] for m in seg_metas}
 
         last = len(frames)
         start_frames = sorted(s + [a + b for a, b in zip(s, t)] + [0, last])
         stop_frames = start_frames[1:]
 
         return video_meta.name, [
-            Segments(frames[start:stop], class_map.get(start, self.OTHER_LABEL))
+            Segments(frames[start:stop],
+                     label_map.get(start, self.OTHER_LABEL))
             for start, stop in zip(start_frames, stop_frames)
         ]
 
     def write_video(self, video, output_dir='cutting/'):
         name, frames = video
-        save_video(
-            self.root + output_dir + name,
-            self.VIDEO_FRAMERATE, self.VIDEO_WIDTH, self.VIDEO_HEIGHT,
-            frames
-        )
+        save_video(self.root + output_dir + name, self.VIDEO_FRAMERATE,
+                   self.VIDEO_WIDTH, self.VIDEO_HEIGHT, frames)

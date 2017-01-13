@@ -15,18 +15,23 @@ class Video:
             raise Exception('Cannot open video: {}'.format(self.path))
         return self
 
-    def read(self, resized_size=None):
+    def load(self):
         frames = []
         while True:
             ret, frame = self.cap.read()
             if not ret:
                 break
-            frames.append(
-                imresize(frame, (resized_size[1], resized_size[0]))
-                if resized_size else frame
-            )
+            frames.append(frame)
         self.frames = frames
-        return frames
+        return self
+
+    def read(self):
+        return self.load().frames
+
+    def resize(self, size=None):
+        if size:
+            self.frames = [imresize(f, (size[1], size[0])) for f in self.frames]
+        return self.frames
 
     @classmethod
     def np_array(cls, frames, dim_ordering='th'):
