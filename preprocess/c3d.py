@@ -1,3 +1,7 @@
+import os
+import time
+
+import h5py
 import numpy as np
 from keras import backend as K
 from keras.layers.convolutional import Convolution3D, MaxPooling3D, ZeroPadding3D
@@ -14,31 +18,36 @@ class C3DFeatureNet:
 
     INPUT_FRAMES = 16
 
-    def __init__(self, model_weight=None, model_mean=None):
+    def __init__(self, feature_file, model_weight=None, model_mean=None):
         self.model_weight = model_weight or self.MODEL_WEIGHTS
         self.model_mean = model_mean or self.MODEL_MEAN
         self.input_size = (112, 112)
+        self.feature_file = feature_file
 
     def start(self, dataset, stop_index=None):
         model = self.load_network()
         mean = self.load_mean()
 
         model.compile(optimizer='sgd', loss='mse')
+        print('C3D-Network is ready.')
 
         def apply_model(frames):
             x = self.build_input(frames)
             return model.predict(x - mean, batch_size=32)
 
+        labels, features = [], []
         for i, item in enumerate(dataset.get(self.input_size)):
             if i == stop_index:
                 break
             name, segs = item
-            for seg in segs:
-                if len(seg.frames) == 0:
-                    continue
-                y = apply_model(seg.frames)
-                # label = seg.label
-            # write `name` info
+
+            s = time.time()
+            fs = [apply_model(seg.frames) for seg in segs if len(seg.frames)]
+            features += fs
+            labels += [[seg.label] * f.shape[0] for f, seg in zip(fs, segs)]
+
+            print('Finish extracting {} in {} sec.'.format(name, time.time() - s))
+        self.save_features(features, labels)
 
     def build_input(self, frames):
         np_video = Video.np_array(frames).transpose(1, 0, 2, 3)
@@ -51,6 +60,17 @@ class C3DFeatureNet:
         np_video = np_video.transpose(0, 2, 1, 3, 4)
 
         return np_video
+
+    def create_feature_file(self):
+        mode = 'r+' if os.path.exists(self.feature_file) else 'w'
+        with h5py.File(self.feature_file, mode) as _:
+            pass
+
+    def save_features(self, features, labels):
+        self.create_feature_file()
+        with h5py.File(self.feature_file, 'r+') as h5:
+            h5.create_dataset('features', data=np.concatenate(features), dtype='float32')
+            h5.create_dataset('labels', data=np.concatenate(labels), dtype='int8')
 
     def load_mean(self):
         mean_total = np.load(self.model_mean)
