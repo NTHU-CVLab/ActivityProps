@@ -7,13 +7,13 @@ from keras.layers.convolutional import Convolution3D, MaxPooling3D, ZeroPadding3
 from keras.layers.core import Dense, Dropout, Flatten
 from keras.models import Sequential
 
-from video import Video
+from preprocess.video import Video
 
 
 class C3DFeatureNet:
 
-    MODEL_WEIGHTS = '../data/models/c3d-sports1M_weights.h5'
-    MODEL_MEAN = '../data/models/c3d-sports1M_mean.npy'
+    MODEL_WEIGHTS = 'data/models/c3d-sports1M_weights.h5'
+    MODEL_MEAN = 'data/models/c3d-sports1M_mean.npy'
 
     INPUT_FRAMES = 16
 
@@ -22,13 +22,18 @@ class C3DFeatureNet:
         self.model_mean = model_mean or self.MODEL_MEAN
         self.input_size = (112, 112)
         self.feature_file = feature_file
+        self.model = None
+        self.mean = None
+
+    def load(self):
+        self.model = self.load_network()
+        self.mean = self.load_mean()
+        self.model.compile(optimizer='sgd', loss='mse')
+        print('C3D-Network is ready.')
 
     def start(self, dataset):
-        model = self.load_network()
-        mean = self.load_mean()
-
-        model.compile(optimizer='sgd', loss='mse')
-        print('C3D-Network is ready.')
+        model = self.model
+        mean = self.mean
 
         def apply_model(seg):
             num_x, x = self.build_input(seg.frames)
@@ -46,6 +51,16 @@ class C3DFeatureNet:
             print('Finish {} in {} sec.'.format(name, time.time() - s))
 
         self.save_features(np.vstack(features), np.vstack(labels))
+
+    def extract_feature(self, video):
+        model = self.model
+        mean = self.mean
+
+        def apply_model(frames):
+            _, x = self.build_input(frames)
+            return model.predict(x - mean, batch_size=32)
+
+        return apply_model(video.load().resize(self.input_size))
 
     def build_input(self, frames):
         np_video = Video.np_array(frames).transpose(1, 0, 2, 3)

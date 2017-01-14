@@ -2,7 +2,7 @@ import os
 import itertools
 from collections import namedtuple
 
-from video import Video, save_video
+from preprocess.video import Video, save_video
 
 Meta = namedtuple('VideoMeta', ['name', 'seg_metas'])
 Segments = namedtuple('VideoSegments', ['frames', 'label'])
