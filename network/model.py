@@ -25,6 +25,7 @@ class FC4Net:
         return model
 
     def compile_model(self):
-        self.model.compile(loss='binary_crossentropy',
-                           optimizer='adam',
-                           metrics=['accuracy'])
+        self.model.compile(
+            loss='binary_crossentropy',
+            optimizer='adam',
+            metrics=['accuracy'])
