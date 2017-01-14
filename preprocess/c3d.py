@@ -7,13 +7,13 @@ from keras.layers.convolutional import Convolution3D, MaxPooling3D, ZeroPadding3
 from keras.layers.core import Dense, Dropout, Flatten
 from keras.models import Sequential
 
-from video import Video
+from preprocess.video import Video
 
 
 class C3DFeatureNet:
 
-    MODEL_WEIGHTS = '../data/models/c3d-sports1M_weights.h5'
-    MODEL_MEAN = '../data/models/c3d-sports1M_mean.npy'
+    MODEL_WEIGHTS = 'data/models/c3d-sports1M_weights.h5'
+    MODEL_MEAN = 'data/models/c3d-sports1M_mean.npy'
 
     INPUT_FRAMES = 16
 
