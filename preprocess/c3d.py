@@ -53,14 +53,10 @@ class C3DFeatureNet:
         self.save_features(np.vstack(features), np.vstack(labels))
 
     def extract_feature(self, video):
-        model = self.model
-        mean = self.mean
+        frames = video.load().resize(self.input_size)
+        _, x = self.build_input(frames)
 
-        def apply_model(frames):
-            _, x = self.build_input(frames)
-            return model.predict(x - mean, batch_size=32)
-
-        return apply_model(video.load().resize(self.input_size))
+        return self.model.predict(x - self.mean, batch_size=32)
 
     def build_input(self, frames):
         np_video = Video.np_array(frames).transpose(1, 0, 2, 3)
