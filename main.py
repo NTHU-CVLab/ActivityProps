@@ -6,7 +6,7 @@ from network.model import FC4Net
 
 def main():
     dataset = MSRII.Dataset('/data-disk/MSRII/')
-    c3dnet = C3DFeatureNet(feature_file='preprocess/MSRII-c3d-features.h5')
+    c3dnet = C3DFeatureNet(feature_file='data/features/MSRII-c3d-features.h5')
 
     c3dnet.load()
     c3dnet.start(dataset)
@@ -20,7 +20,7 @@ def test():
     y = c3dnet.extract_feature(video)
 
     fc4net = FC4Net()
-    fc4net.load_weights('network/FC4Net_weights.h5')
+    fc4net.load_weights('data/weights/FC4Net_weights.h5')
     pred = fc4net.predict(y, batch_size=32)
 
     print(pred.shape)

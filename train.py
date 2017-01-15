@@ -66,7 +66,7 @@ def baselines(feature_file):
 
 
 if __name__ == '__main__':
-    feature_file = 'preprocess/MSRII-c3d-features.h5'
+    feature_file = 'data/features/MSRII-c3d-features.h5'
 
     train(feature_file)
     cross_validation(feature_file, FC4Net.build_model)
