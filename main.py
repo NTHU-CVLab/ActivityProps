@@ -1,3 +1,5 @@
+import argparse
+
 import numpy as np
 
 from preprocess import MSRII
@@ -6,15 +8,22 @@ from preprocess.video import Video
 from network.model import FC4Net
 
 
-def main():
-    dataset = MSRII.Dataset('/data-disk/MSRII/')
-    c3dnet = C3DFeatureNet(feature_file='data/features/MSRII-c3d-features.h5')
+NUM_VIDEOS_FOR_TEST = 10
 
+
+def extract_feature():
+    dataset = MSRII.Dataset('/data-disk/MSRII/')
+
+    c3dnet = C3DFeatureNet(feature_file='data/features/MSRII-c3d-features.h5')
     c3dnet.load()
     c3dnet.start(dataset)
 
+    dataset.video_metas = dataset.video_metas[10:]
+    c3dnet.feature_file = 'data/features/MSRII-c3d-features-excluded-first10.h5'
+    c3dnet.start(dataset)
 
-def test(num_video=5):
+
+def test_proposal(num_video=NUM_VIDEOS_FOR_TEST):
     dataset = MSRII.Dataset('/data-disk/MSRII/')
 
     c3dnet = C3DFeatureNet(feature_file=None)
@@ -66,4 +75,5 @@ def nms(pred, tol=16, prob_ths=.5):
 
 
 if __name__ == '__main__':
-    test(num_video=5)
+    extract_feature()
+    test_proposal(num_video=NUM_VIDEOS_FOR_TEST)

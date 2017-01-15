@@ -25,7 +25,10 @@ def train(feature_file):
         validation_data=(X_test, y_test), verbose=0)
 
     loss, accuracy = fc4net.evaluate(X_test, y_test, batch_size=32, verbose=0)
+    print('=== FC4Net ===')
     print('Test accuracy: %.2f%%' % (accuracy * 100))
+
+    fc4net.save_weights('data/weights/FC4Net_weights.h5')
 
 
 def train_mlp_model(feature_file):
@@ -43,8 +46,7 @@ def train_mlp_model(feature_file):
             X_train, y_train,
             batch_size=batch_size, nb_epoch=1,
             validation_split=0.2, verbose=0)
-        loss, accuracy = H.history['val_loss'], H.history['val_acc']
-
+        accuracy = H.history['val_acc'][0]
         if accuracy > best_accuracy:
             best_accuracy = accuracy
             best_epoch = ep
@@ -52,20 +54,29 @@ def train_mlp_model(feature_file):
 
     model.reset_states()
     model.set_weights(best_W)
+    print('=== MLPModel ===')
     print('best_accuracy: %f generated at epoch %d' % (best_accuracy, best_epoch))
 
-    loss, accuracy = model.evaluate(X_test, y_test, batch_size=16)
+    loss, accuracy = model.evaluate(X_test, y_test, batch_size=16, verbose=0)
     print('Test accuracy: %.2f%%' % (accuracy * 100))
 
 
 def evaluator(feature_file):
     X, Y = load_data(feature_file)
     evaluator = NetEvaluator(X, Y)
+    print('=== evaluator & cross-validate ===')
     evaluator.baseline_svm()
+    evaluator.baseline_randomforest()
+    print('-For FC4Net-')
     evaluator.cross_validation(FC4Net.build_model)
+    print('-For MLPModel-')
+    evaluator.cross_validation(MLPModel.build_model)
 
 
 if __name__ == '__main__':
-    feature_file = 'data/features/MSRII-c3d-features.h5'
+    feature_file = 'data/features/MSRII-c3d-features-excluded-first10.h5'
+    print('** Train under {} **'.format(feature_file))
+
     train(feature_file)
+    train_mlp_model(feature_file)
     evaluator(feature_file)

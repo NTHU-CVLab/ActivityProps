@@ -19,11 +19,20 @@ class BaseNet:
     def evaluate(self, *args, **kwargs):
         return self.model.evaluate(*args, **kwargs)
 
+    def get_weights(self, *args, **kwargs):
+        return self.model.get_weights(*args, **kwargs)
+
+    def set_weights(self, *args, **kwargs):
+        return self.model.set_weights(*args, **kwargs)
+
     def load_weights(self, *args, **kwargs):
-        self.model.load_weights(*args, **kwargs)
+        return self.model.load_weights(*args, **kwargs)
 
     def save_weights(self, *args, **kwargs):
-        self.model.save_weights(*args, **kwargs)
+        return self.model.save_weights(*args, **kwargs)
+
+    def reset_states(self):
+        return self.model.reset_states()
 
     @staticmethod
     def build_model(self):
