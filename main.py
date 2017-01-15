@@ -9,7 +9,7 @@ from preprocess.video import Video
 from network.model import FC4Net
 
 
-NUM_VIDEOS_FOR_TEST = 10
+NUM_VIDEOS_FOR_TEST = 5
 
 
 def extract_feature():
@@ -21,6 +21,10 @@ def extract_feature():
 
     dataset.video_metas = dataset.video_metas[10:]
     c3dnet.feature_file = 'data/features/MSRII-c3d-features-excluded-first10.h5'
+    c3dnet.start(dataset)
+
+    dataset.video_metas = dataset.video_metas[5:]
+    c3dnet.feature_file = 'data/features/MSRII-c3d-features-excluded-first5.h5'
     c3dnet.start(dataset)
 
 
@@ -42,7 +46,7 @@ def test_proposal(num_video=NUM_VIDEOS_FOR_TEST):
 
         predict = nms(pred, tol=16)
 
-        seg_metas = dataset.video_metas[0].seg_metas
+        seg_metas = dataset.video_metas[i].seg_metas
         target = []
         for seg_meta in seg_metas:
             s = seg_meta['start']
