@@ -1,5 +1,6 @@
 from keras.models import Sequential
 from keras.layers import Dense, Dropout
+from keras.optimizers import SGD
 
 
 class BaseNet:
@@ -62,6 +63,29 @@ class FC4Net(BaseNet):
             model.compile(
                 loss='binary_crossentropy',
                 optimizer='adam',
+                metrics=['accuracy'])
+
+        return model
+
+
+class MLPModel(BaseNet):
+
+    @staticmethod
+    def build_model(train=True):
+        model = Sequential()
+        model.add(Dense(256, input_dim=4096, init='uniform', activation='sigmoid'))
+        model.add(Dropout(0.5))
+        model.add(Dense(256, init='uniform', activation='sigmoid'))
+        model.add(Dropout(0.5))
+        model.add(Dense(256, init='uniform', activation='sigmoid'))
+        model.add(Dropout(0.5))
+        model.add(Dense(1, init='uniform', activation='sigmoid'))
+
+        if train:
+            sgd = SGD(lr=0.1, decay=1e-6, momentum=0.9, nesterov=True)
+            model.compile(
+                loss='binary_crossentropy',
+                optimizer=sgd,
                 metrics=['accuracy'])
 
         return model
