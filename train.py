@@ -30,9 +30,9 @@ def train(feature_file):
 
 def evaluator(feature_file):
     X, Y = load_data(feature_file)
-    evalator = NetEvaluator(X, Y)
-    evalator.baseline_svm()
-    evalator.cross_validation(FC4Net.build_model)
+    evaluator = NetEvaluator(X, Y)
+    evaluator.baseline_svm()
+    evaluator.cross_validation(FC4Net.build_model)
 
 
 if __name__ == '__main__':
