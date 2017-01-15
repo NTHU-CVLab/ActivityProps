@@ -1,0 +1,4 @@
+Test accuracy: 93.01%
+SVM accuracy 91.95%
+Accuracy: 90.46% (+-0.74%)
+Accuracy: 92.11% (+-0.95%) [Feature normalized]
