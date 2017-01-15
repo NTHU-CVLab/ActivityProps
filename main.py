@@ -1,4 +1,5 @@
 import argparse
+import pickle
 
 import numpy as np
 
@@ -32,6 +33,7 @@ def test_proposal(num_video=NUM_VIDEOS_FOR_TEST):
     fc4net = FC4Net()
     fc4net.load_weights('data/weights/FC4Net_weights.h5')
 
+    results = {}
     for i in range(num_video):
         video_meta = dataset.video_metas[i]
         video = Video('/data-disk/MSRII/videos/' + video_meta.name)
@@ -47,8 +49,17 @@ def test_proposal(num_video=NUM_VIDEOS_FOR_TEST):
             t = seg_meta['duration']
             target.append((s, s + t))
 
-        print('Target', target)
-        print('Predict', predict)
+        results[video_meta.name] = {
+            'ground_truth': target,
+            'predict': predict
+        }
+
+    with open('data/outputs/predicted_proposal.pkl', 'wb') as f:
+        pickle.dump(results, f, protocol=2)  # For Python2
+
+    with open('data/outputs/predicted_proposal.pkl', 'rb') as f:
+        results = pickle.load(f)
+        print(results.keys())
 
 
 def nms(pred, tol=16, prob_ths=.5):
@@ -75,5 +86,12 @@ def nms(pred, tol=16, prob_ths=.5):
 
 
 if __name__ == '__main__':
-    extract_feature()
-    test_proposal(num_video=NUM_VIDEOS_FOR_TEST)
+    p = argparse.ArgumentParser()
+    p.add_argument('--extract', action='store_true',
+        help='Whether in extracting feature phase.')
+    args = p.parse_args()
+
+    if args.extract:
+        extract_feature()
+    else:
+        test_proposal(num_video=NUM_VIDEOS_FOR_TEST)
