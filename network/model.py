@@ -71,7 +71,7 @@ class FC4Net(BaseNet):
         if train:
             model.compile(
                 loss='binary_crossentropy',
-                optimizer='adam',
+                optimizer='rmsprop',
                 metrics=['accuracy'])
 
         return model
