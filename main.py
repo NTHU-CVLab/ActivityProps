@@ -23,7 +23,7 @@ def test():
     fc4net.load_weights('network/FC4Net_weights.h5')
     pred = fc4net.predict(y, batch_size=32)
 
-    print(pred)
+    print(pred.shape)
 
 if __name__ == '__main__':
     test()
