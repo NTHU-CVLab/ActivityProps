@@ -17,7 +17,7 @@ class C3DFeatureNet:
         self.model_weight = model_weight or self.MODEL_WEIGHTS
         self.model_mean = model_mean or self.MODEL_MEAN
         self.input_size = (112, 112)
-        self.feature_file = FeatureFile(feature_file, write=True)
+        self.feature_file = FeatureFile(feature_file, write=True) if feature_file else None
         self.model = None
         self.mean = None
 
