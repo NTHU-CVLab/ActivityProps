@@ -1,5 +1,5 @@
 from keras.models import Sequential
-from keras.layers import Dense, Dropout
+from keras.layers import Dense, Dropout, Convolution1D, MaxPooling1D, Flatten, Embedding
 from keras.optimizers import SGD
 
 
@@ -158,3 +158,27 @@ class MLPModel(BaseNet):
 
         if save:
             self.save_model()
+
+
+class SaNet(BaseNet):
+
+    NAME = 'SaNet'
+
+    @staticmethod
+    def build_model(train=True):
+        model = Sequential()
+        model.add(Embedding(2000, 256, input_length=4096))
+        model.add(Dropout(0.25))
+        model.add(Convolution1D(128, 10, activation='relu'))
+        model.add(Convolution1D(128, 5, activation='relu'))
+        model.add(MaxPooling1D(pool_length=4))
+        model.add(Flatten())
+        model.add(Dense(1, activation='sigmoid'))
+
+        if train:
+            model.compile(
+                optimizer='adam',
+                loss='binary_crossentropy',
+                metrics=['accuracy'])
+
+        return model

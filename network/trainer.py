@@ -3,7 +3,7 @@ import pickle
 from sklearn.model_selection import train_test_split
 
 from preprocess.feature import FeatureFile
-from network.model import FC1Net, FC4Net, MLPModel
+from network.model import FC1Net, FC4Net, MLPModel, SaNet
 from network.evaluate import NetEvaluator
 
 
@@ -26,6 +26,7 @@ class Trainer:
         FC1Net(train=True).run((train_x, train_y), (test_x, test_y), args.save)
         FC4Net(train=True).run((train_x, train_y), (test_x, test_y), args.save)
         MLPModel(train=True).run((train_x, train_y), (test_x, test_y), args.save)
+        SaNet(train=True).run((train_x, train_y), (test_x, test_y), args.save)
 
         self.evaluator((train_x, train_y), (test_x, test_y), self.X, self.Y)
 
@@ -46,6 +47,8 @@ class Trainer:
         evaluator.cross_validation(FC4Net.build_model)
         print('-For MLPModel-')
         evaluator.cross_validation(MLPModel.build_model)
+        print('-For SaNet-')
+        evaluator.cross_validation(SaNet.build_model)
 
     def load_full_data(self, feature_file):
         X, Y = FeatureFile(feature_file).load()
