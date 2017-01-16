@@ -1,6 +1,6 @@
 import argparse
 
-from preprocess import MSRII
+from preprocess import MSRII, KTH
 from preprocess.c3d import C3DFeatureNet
 from network.trainer import Trainer
 from network.model import FC4Net
@@ -8,8 +8,10 @@ from evaluate.evaluator import ProposalEvaluator
 
 
 def extract_feature():
-    dataset = MSRII.Dataset('/data-disk/MSRII/')
-    c3dnet = C3DFeatureNet(feature_file='data/features/MSRII-c3d-features.h5')
+    # dataset = MSRII.Dataset('/data-disk/MSRII/')
+    # c3dnet = C3DFeatureNet(feature_file='data/features/MSRII-c3d-features.h5')
+    dataset = KTH.Dataset('/data-disk/KTH/')
+    c3dnet = C3DFeatureNet(feature_file='data/features/KTH-c3d-features.h5')
     c3dnet.load()
     c3dnet.start(dataset)
 
