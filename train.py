@@ -4,18 +4,17 @@ from sklearn.model_selection import train_test_split
 
 from network.model import FC1Net, FC4Net, MLPModel
 from network.evaluate import NetEvaluator
+from preprocess.feature import FeatureFile
 
 
 def load_data(feature_file):
-    with h5py.File(feature_file, 'r') as h5:
-        X = np.array(h5['features'])
-        Y = np.array(h5['labels']).reshape(X.shape[0])
-        Y[Y > 0] = 1
-        return X, Y
+    X, Y = FeatureFile(feature_file).load()
+    Y[Y > 0] = 1
+    return X, Y
 
 
 def load_test_data():
-    with h5py.File('data/features/MSRII-c3d-features.h5', 'r') as h5:
+    with h5py.File('data/features/MSRII-c3d-features.h5.old', 'r') as h5:
         X = np.array(h5['features'])
         Y = np.array(h5['labels']).reshape(X.shape[0])
         Y[Y > 0] = 1
@@ -31,14 +30,14 @@ def _train_test_split(feature_file):
 
 
 def train_fc1net(feature_file):
-    # X, Y = load_data(feature_file)
-    # X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=0.2)
-    X_train, X_test, y_train, y_test = _train_test_split(feature_file)
+    X, Y = load_data(feature_file)
+    X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=0.2)
+    # X_train, X_test, y_train, y_test = _train_test_split(feature_file)
 
     fc1net = FC1Net(train=True)
     fc1net.fit(
         X_train, y_train,
-        nb_epoch=500, batch_size=32,
+        nb_epoch=100, batch_size=32,
         validation_data=(X_test, y_test), verbose=0)
 
     loss, accuracy = fc1net.evaluate(X_test, y_test, batch_size=32, verbose=0)
@@ -49,14 +48,14 @@ def train_fc1net(feature_file):
 
 
 def train_fc4net(feature_file):
-    # X, Y = load_data(feature_file)
-    # X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=0.2)
-    X_train, X_test, y_train, y_test = _train_test_split(feature_file)
+    X, Y = load_data(feature_file)
+    X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=0.2)
+    # X_train, X_test, y_train, y_test = _train_test_split(feature_file)
 
     fc4net = FC4Net(train=True)
     fc4net.fit(
         X_train, y_train,
-        nb_epoch=500, batch_size=32,
+        nb_epoch=100, batch_size=32,
         validation_data=(X_test, y_test), verbose=0)
 
     loss, accuracy = fc4net.evaluate(X_test, y_test, batch_size=32, verbose=0)
@@ -67,9 +66,9 @@ def train_fc4net(feature_file):
 
 
 def train_mlp_model(feature_file):
-    # X, Y = load_data(feature_file)
-    # X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=0.2)
-    X_train, X_test, y_train, y_test = _train_test_split(feature_file)
+    X, Y = load_data(feature_file)
+    X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=0.2)
+    # X_train, X_test, y_train, y_test = _train_test_split(feature_file)
     batch_size = 16
     nb_epoch = 1000
 
@@ -102,12 +101,14 @@ def train_mlp_model(feature_file):
 def evaluator(feature_file):
     X, Y = load_data(feature_file)
     evaluator = NetEvaluator(X, Y)
-    evaluator.X, evaluator.Y = load_test_data()
-    evaluator.train_x, evaluator.test_x, evaluator.train_y, evaluator.test_y = _train_test_split(feature_file)
+    # evaluator.X, evaluator.Y = load_test_data()
+    # evaluator.train_x, evaluator.test_x, evaluator.train_y, evaluator.test_y = _train_test_split(feature_file)
 
     print('=== evaluator & cross-validate ===')
     evaluator.baseline_svm()
     evaluator.baseline_randomforest()
+    print('-For FC1Net-')
+    evaluator.cross_validation(FC1Net.build_model)
     print('-For FC4Net-')
     evaluator.cross_validation(FC4Net.build_model)
     print('-For MLPModel-')
@@ -115,10 +116,11 @@ def evaluator(feature_file):
 
 
 if __name__ == '__main__':
-    feature_file = 'data/features/MSRII-c3d-features-excluded-first5.h5'
+    # feature_file = 'data/features/MSRII-c3d-features-excluded-first5.h5'
+    feature_file = 'data/features/MSRII-c3d-features.h5'
     print('** Train under {} **'.format(feature_file))
 
     train_fc1net(feature_file)
     train_fc4net(feature_file)
-    # train_mlp_model(feature_file)
+    train_mlp_model(feature_file)
     evaluator(feature_file)
