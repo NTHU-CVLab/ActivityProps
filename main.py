@@ -8,8 +8,11 @@ from evaluate.evaluator import ProposalEvaluator
 
 
 def extract_feature():
-    # dataset = MSRII.Dataset('/data-disk/MSRII/')
-    # c3dnet = C3DFeatureNet(feature_file='data/features/MSRII-c3d-features.h5')
+    dataset = MSRII.Dataset('/data-disk/MSRII/')
+    c3dnet = C3DFeatureNet(feature_file='data/features/MSRII-c3d-features.h5')
+    c3dnet.load()
+    c3dnet.start(dataset)
+
     dataset = KTH.Dataset('/data-disk/KTH/')
     c3dnet = C3DFeatureNet(feature_file='data/features/KTH-c3d-features.h5')
     c3dnet.load()
