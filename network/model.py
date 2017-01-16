@@ -1,13 +1,21 @@
 from keras.models import Sequential
-from keras.layers import Dense, Dropout
+from keras.layers import Dense, Dropout, Convolution1D, MaxPooling1D, Flatten, Embedding
 from keras.optimizers import SGD
+
+
+WEIGHTS_FOLDER_FORMAT = 'data/weights/{}_weights.h5'
 
 
 class BaseNet:
 
-    def __init__(self, train=False):
+    NAME = 'NoneNet'
+
+    def __init__(self, train=False, **kwargs):
         self.model = self.build_model(train)
         self.history = None
+        self.epoch = 10 or kwargs.get('epoch')
+        self.batch_size = 32 or kwargs.get('batch_size')
+        self.verbose = 0 or kwargs.get('verbose')
 
     def fit(self, *args, **kwargs):
         self.history = self.model.fit(*args, **kwargs)
@@ -31,6 +39,10 @@ class BaseNet:
     def save_weights(self, *args, **kwargs):
         return self.model.save_weights(*args, **kwargs)
 
+    def save_model(self, filename):
+        model_name = filename or WEIGHTS_FOLDER_FORMAT.format(self.NAME)
+        return self.model.save_weights(model_name)
+
     def reset_states(self):
         return self.model.reset_states()
 
@@ -38,8 +50,23 @@ class BaseNet:
     def build_model(self):
         raise Exception('Not implemented')
 
+    def run(self, train, validate, save=False):
+        train_x, train_y = train
+        validate_x, validate_y = validate
+        self.model.fit(
+            train_x, train_y,
+            nb_epoch=self.epoch, batch_size=self.batch_size,
+            validation_data=(validate_x, validate_y),
+            verbose=self.verbose)
+        _, accuracy = self.model.evaluate(validate_x, validate_y, batch_size=32, verbose=0)
+        if save:
+            self.save_model()
+        print('=== %s ===\nTest accuracy: %.2f%%' % (self.NAME, accuracy * 100))
+
 
 class FC1Net(BaseNet):
+
+    NAME = 'FC1Net'
 
     @staticmethod
     def build_model(train=True):
@@ -56,6 +83,8 @@ class FC1Net(BaseNet):
 
 
 class FC4Net(BaseNet):
+
+    NAME = 'FC4Net'
 
     @staticmethod
     def build_model(train=True):
@@ -79,6 +108,8 @@ class FC4Net(BaseNet):
 
 class MLPModel(BaseNet):
 
+    NAME = 'MLPModel'
+
     @staticmethod
     def build_model(train=True):
         model = Sequential()
@@ -95,6 +126,59 @@ class MLPModel(BaseNet):
             model.compile(
                 loss='binary_crossentropy',
                 optimizer=sgd,
+                metrics=['accuracy'])
+
+        return model
+
+    def run(self, train, validate, save=False):
+        train_x, train_y = train
+        validate_x, validate_y = validate
+        model = self.model
+
+        best_accuracy, best_epoch = 0.0, 0
+        for ep in range(self.epoch):
+            H = model.fit(
+                train_x, train_y,
+                batch_size=self.batch_size, nb_epoch=1,
+                validation_split=0.2, verbose=self.verbose)
+            accuracy = H.history['val_acc'][0]
+            if accuracy > best_accuracy:
+                best_accuracy = accuracy
+                best_epoch = ep
+                best_W = model.get_weights()
+
+        model.reset_states()
+        model.set_weights(best_W)
+        self.model = model
+
+        _, accuracy = self.model.evaluate(validate_x, validate_y, batch_size=32, verbose=0)
+
+        print('=== %s ===\nTest accuracy: %.2f%%' % (self.NAME, accuracy * 100))
+        print('best_accuracy: %f generated at epoch %d' % (best_accuracy, best_epoch))
+
+        if save:
+            self.save_model()
+
+
+class SaNet(BaseNet):
+
+    NAME = 'SaNet'
+
+    @staticmethod
+    def build_model(train=True):
+        model = Sequential()
+        model.add(Embedding(2000, 256, input_length=4096))
+        model.add(Dropout(0.25))
+        model.add(Convolution1D(128, 10, activation='relu'))
+        model.add(Convolution1D(128, 5, activation='relu'))
+        model.add(MaxPooling1D(pool_length=4))
+        model.add(Flatten())
+        model.add(Dense(1, activation='sigmoid'))
+
+        if train:
+            model.compile(
+                optimizer='adam',
+                loss='binary_crossentropy',
                 metrics=['accuracy'])
 
         return model

@@ -1,92 +1,53 @@
 import argparse
-import pickle
-
-import numpy as np
 
 from preprocess import MSRII
 from preprocess.c3d import C3DFeatureNet
-from preprocess.video import Video
+from network.trainer import Trainer
+from network.model import FC4Net
+from evaluate.evaluator import ProposalEvaluator
 
 
 def extract_feature():
     dataset = MSRII.Dataset('/data-disk/MSRII/')
-
     c3dnet = C3DFeatureNet(feature_file='data/features/MSRII-c3d-features.h5')
     c3dnet.load()
     c3dnet.start(dataset)
 
 
-def test_proposal(video_ids):
-    from network.model import FC4Net
+def train_models(args):
+    trainer = Trainer(feature_file='data/features/MSRII-c3d-features.h5')
+    trainer.run(args)
+    trainer.summary()
 
+
+def generate_proposal():
     dataset = MSRII.Dataset('/data-disk/MSRII/')
-
-    c3dnet = C3DFeatureNet(feature_file=None)
-    c3dnet.load()
-
     fc4net = FC4Net()
     fc4net.load_weights('data/weights/FC4Net_weights.h5')
 
-    results = {}
-    for vid in video_ids:
-        video_meta = dataset.video_metas[vid]
-        video = Video('/data-disk/MSRII/videos/' + video_meta.name)
-        y = c3dnet.extract_feature(video)
-        pred = fc4net.predict(y, batch_size=32)
-
-        predict = nms(pred, tol=16)
-
-        seg_metas = dataset.video_metas[vid].seg_metas
-        target = []
-        for seg_meta in seg_metas:
-            s = seg_meta['start']
-            t = seg_meta['duration']
-            target.append((s, s + t))
-
-        results[video_meta.name] = {
-            'ground_truth': target,
-            'predict': predict
-        }
-
-    with open('data/outputs/predicted_proposal.pkl', 'wb') as f:
-        pickle.dump(results, f, protocol=2)  # For Python2
-
-    with open('data/outputs/predicted_proposal.pkl', 'rb') as f:
-        results = pickle.load(f)
-        print(results.keys())
-
-
-def nms(pred, tol=16, prob_ths=.5):
-    p = pred.reshape(len(pred))
-    candidate = np.where(p > prob_ths)
-
-    start = np.multiply(candidate, 16).tolist()[0]
-    end = (np.multiply(candidate, 16) + 16).tolist()[0]
-
-    predict = []
-    skip = [0 for _ in range(len(start))]
-    for i, p in enumerate(zip(start, end)):
-        s, e = p
-        if skip[i]:
-            continue
-        next_idx = i + 1 if i + 1 < len(start) else -1
-        for j, next_s in enumerate(start[next_idx:]):
-            if e + tol >= next_s:
-                e = end[next_idx + j]
-                skip[next_idx + j] = 1
-        predict.append((s, e))
-
-    return predict
+    evaluatoor = ProposalEvaluator(dataset)
+    evaluatoor.eval(fc4net)
+    # calc tIOU
 
 
 if __name__ == '__main__':
     p = argparse.ArgumentParser()
-    p.add_argument('--extract', action='store_true',
+    p.add_argument('-t', '--train', action='store_true')
+    p.add_argument('-e', '--extract', action='store_true',
         help='Whether in extracting feature phase.')
+    p.add_argument('--eva', action='store_true')
+
+    # For training
+    p.add_argument('--videowise', action='store_true',
+        help='Whether training with videowise feature splitting.')
+    p.add_argument('--save', action='store_true',
+        help='Whether saving training weights.')
+
     args = p.parse_args()
 
     if args.extract:
         extract_feature()
-    else:
-        # Test videos:  ['features_26.avi' 'features_41.avi' 'features_48.avi' 'features_1.avi' 'features_6.avi']
-        test_proposal([25, 40, 47, 0, 5])
+    elif args.train:
+        train_models(args)
+    elif args.eva:
+        generate_proposal()
