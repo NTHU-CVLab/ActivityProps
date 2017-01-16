@@ -21,8 +21,8 @@ def test_proposal():
         results = pickle.load(f)
 
     test_videos_keys = results['exclude_features_keys']
-    find_vid = re.compile('features_%d.avi')
-    video_ids = [find_vid.search(k).group(0) for k in test_videos_keys]
+    find_vid = re.compile('features_(\d+).avi')
+    video_ids = [int(find_vid.search(k).group(1)) for k in test_videos_keys]
 
     dataset = MSRII.Dataset('/data-disk/MSRII/')
     c3dnet = C3DFeatureNet(feature_file=None)
