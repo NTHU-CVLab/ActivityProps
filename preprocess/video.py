@@ -15,6 +15,11 @@ class Video:
             raise Exception('Cannot open video: {}'.format(self.path))
         return self
 
+    def __len__(self):
+        if not self.frames:
+            self.load()
+        return len(self.frames)
+
     def load(self):
         frames = []
         while True:

@@ -9,7 +9,7 @@ from network.evaluate import NetEvaluator
 
 class Trainer:
 
-    def __init__(self, feature_file):
+    def __init__(self, feature_file=None):
         self.exclude_features_keys = None
         self.feature_filename = feature_file
         self.X, self.Y = self.load_full_data(feature_file)
