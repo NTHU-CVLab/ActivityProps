@@ -6,10 +6,6 @@ import numpy as np
 from preprocess import MSRII
 from preprocess.c3d import C3DFeatureNet
 from preprocess.video import Video
-from network.model import FC4Net
-
-
-NUM_VIDEOS_FOR_TEST = 5
 
 
 def extract_feature():
@@ -19,16 +15,10 @@ def extract_feature():
     c3dnet.load()
     c3dnet.start(dataset)
 
-    dataset.video_metas = dataset.video_metas[10:]
-    c3dnet.feature_file = 'data/features/MSRII-c3d-features-excluded-first10.h5'
-    c3dnet.start(dataset)
 
-    dataset.video_metas = dataset.video_metas[5:]
-    c3dnet.feature_file = 'data/features/MSRII-c3d-features-excluded-first5.h5'
-    c3dnet.start(dataset)
+def test_proposal(video_ids):
+    from network.model import FC4Net
 
-
-def test_proposal(num_video=NUM_VIDEOS_FOR_TEST):
     dataset = MSRII.Dataset('/data-disk/MSRII/')
 
     c3dnet = C3DFeatureNet(feature_file=None)
@@ -38,15 +28,15 @@ def test_proposal(num_video=NUM_VIDEOS_FOR_TEST):
     fc4net.load_weights('data/weights/FC4Net_weights.h5')
 
     results = {}
-    for i in range(num_video):
-        video_meta = dataset.video_metas[i]
+    for vid in video_ids:
+        video_meta = dataset.video_metas[vid]
         video = Video('/data-disk/MSRII/videos/' + video_meta.name)
         y = c3dnet.extract_feature(video)
         pred = fc4net.predict(y, batch_size=32)
 
         predict = nms(pred, tol=16)
 
-        seg_metas = dataset.video_metas[i].seg_metas
+        seg_metas = dataset.video_metas[vid].seg_metas
         target = []
         for seg_meta in seg_metas:
             s = seg_meta['start']
@@ -98,4 +88,5 @@ if __name__ == '__main__':
     if args.extract:
         extract_feature()
     else:
-        test_proposal(num_video=NUM_VIDEOS_FOR_TEST)
+        # Test videos:  ['features_26.avi' 'features_41.avi' 'features_48.avi' 'features_1.avi' 'features_6.avi']
+        test_proposal([25, 40, 47, 0, 5])
