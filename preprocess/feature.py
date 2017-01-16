@@ -29,16 +29,26 @@ class FeatureFile:
         features_keys = natural_sort([k for k in f.keys() if k.startswith('features')])
         labels_keys = natural_sort([k for k in f.keys() if k.startswith('labels')])
         assert len(features_keys) == len(labels_keys)
+
         self.features_keys = features_keys
         self.labels_keys = labels_keys
 
         if random and kwargs.get('video_wise'):
             _features_keys = np.array(features_keys)
-            _labels_keys = np.array(features_keys)
+            _labels_keys = np.array(labels_keys)
             n = len(features_keys)
+            q = int(n * split)
             self.perm = np.random.permutation(n)
-            features_keys = _features_keys[self.perm[int(n * split):]]
-            labels_keys = _labels_keys[self.perm[int(n * split):]]
+            self.excluded = _features_keys[self.perm[:q]]
+            l_keys_a = _labels_keys[self.perm[q:]]
+            l_keys_b = _labels_keys[self.perm[:q]]
+            f_keys_a = _features_keys[self.perm[q:]]
+            f_keys_b = _features_keys[self.perm[:q]]
+
+            return {
+                'train': self._load(f_keys_a, l_keys_a),
+                'test': self._load(f_keys_b, l_keys_b),
+            }
 
         return self._load(features_keys, labels_keys)
 
