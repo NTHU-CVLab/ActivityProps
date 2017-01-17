@@ -15,11 +15,14 @@ class Trainer:
         self.X, self.Y = self.load_full_data(feature_file)
         self.feature_file = FeatureFile(feature_file)
 
-    def run(self, args):
+    def run(self, args, **kwargs):
         print('** Train under {} **'.format(self.feature_filename))
 
         if args.videowise:
             train_x, test_x, train_y, test_y = self.train_test_split_videowise()
+        elif kwargs.get('extra_test'):
+            x, y = self.load_full_data(kwargs.get('extra_test'))
+            train_x, test_x, train_y, test_y = self.X, x, self.Y, y
         else:
             train_x, test_x, train_y, test_y = train_test_split(self.X, self.Y, test_size=0.2)
 

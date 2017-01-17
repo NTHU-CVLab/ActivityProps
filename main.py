@@ -21,7 +21,9 @@ def extract_feature():
 
 def train_models(args):
     trainer = Trainer(feature_file='data/features/MSRII-c3d-features.h5')
+    trainer = Trainer(feature_file='data/features/KTH-c3d-features.h5')
     trainer.run(args)
+    # trainer.run(args, extra_test='data/features/MSRII-c3d-features.h5')
     trainer.summary()
 
 

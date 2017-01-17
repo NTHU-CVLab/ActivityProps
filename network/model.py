@@ -13,7 +13,7 @@ class BaseNet:
     def __init__(self, train=False, **kwargs):
         self.model = self.build_model(train)
         self.history = None
-        self.epoch = 10 or kwargs.get('epoch')
+        self.epoch = 500 or kwargs.get('epoch')
         self.batch_size = 32 or kwargs.get('batch_size')
         self.verbose = 0 or kwargs.get('verbose')
 
